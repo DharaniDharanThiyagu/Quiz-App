@@ -91,98 +91,112 @@ const questions = [
   }
 ];
 
-// You can continue to add more questions and answers to the 'questions' array as needed.
+const questionElement = document.getElementById("question");
+const answerButton = document.getElementById("answer-buttons");
+const nextButton = document.getElementById("next-btn");
 
-  const questionElement=document.getElementById("question")
-  const answerButton=document.getElementById("answer-buttons")
-  const nextButton=document.getElementById("next-btn")
-  
-  let currentQuestionIndex=0;
-  let score=0;
-  function startQuiz()
-  {
-    currentQuestionIndex=0;
-    score=0;
-    nextButton.innerHTML="Next"
-    showQuestion()
+let currentQuestionIndex = 0;
+let score = 0;
+let quizCompleted = false;
+let shuffledQuestions = [];
 
-
-  }
-  function showQuestion()
-  {
-    resetState();
-    let currentQuestion=questions[currentQuestionIndex];
-    let questionNo=currentQuestionIndex+1;
-    questionElement.innerHTML=questionNo+"."+currentQuestion.question
-    console.log(questionNo)
-    currentQuestion.answers.forEach(answers=>{
-        const button=document.createElement("button")
-        button.innerHTML=answers.text
-        button.classList.add('btn');
-        answerButton.appendChild(button)
-        if(answers.correct)
-        {
-            button.dataset.correct=answers.correct
-        }
-        button.addEventListener('click',selectAnswer);
-    })
-  }
-  function resetState()
-  {
-    nextButton.style.display="none"
-    while(answerButton.firstChild)
-    {
-answerButton.removeChild(answerButton.firstChild)
-    }
-  }
-   function selectAnswer(e)
-  {
-const selectedBtn=e.target;
-const isCorrect=selectedBtn.dataset.correct==="true"
-if(isCorrect)
-{
-    selectedBtn.classList.add("correct")
-    score++
+function startQuiz() {
+  currentQuestionIndex = 0;
+  score = 0;
+  quizCompleted = false;
+  shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+  nextButton.innerHTML = "Next";
+  showQuestion();
 }
-else
-{
-    selectedBtn.classList.add("incorrect")
 
+function showQuestion() {
+  resetState();
+
+  const currentQuestion = shuffledQuestions[currentQuestionIndex];
+  const questionNo = currentQuestionIndex + 1;
+
+  questionElement.innerHTML = `${questionNo} of ${shuffledQuestions.length}<br>${currentQuestion.question}`;
+
+  currentQuestion.answers.forEach((answer) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.innerHTML = answer.text;
+    button.classList.add("btn");
+
+    if (answer.correct) {
+      button.dataset.correct = "true";
+    }
+
+    button.addEventListener("click", selectAnswer);
+    answerButton.appendChild(button);
+  });
 }
-Array.from(answerButton.children).forEach(button=>{
-    if(button.dataset.correct==="true")
-    {
-        button.classList.add("correct")
-    }
-    button.disabled=true
-})
-nextButton.style.display="block"
+
+function resetState() {
+  nextButton.style.display = "none";
+  nextButton.disabled = false;
+
+  while (answerButton.firstChild) {
+    answerButton.removeChild(answerButton.firstChild);
   }
-  function showScore()
-  {
-    resetState();
-    questionElement.innerHTML=`you scored ${score} out of ${questions.length}`
-    nextButton.innerHTML="play Again";
-    nextButton.style.display="block"
-  }
-  function handleNextButton()
-  {
-    currentQuestionIndex++;
-       if(currentQuestionIndex < (questions.length))
-       {
-        showQuestion();
-       }
-       else{
-       showScore();
-       }
-  }
-  nextButton.addEventListener("click",()=>{
-    if(currentQuestionIndex < questions.length)
-    {
-        handleNextButton();
+}
+
+function selectAnswer(e) {
+  const selectedBtn = e.currentTarget;
+  const isCorrect = selectedBtn.dataset.correct === "true";
+
+  Array.from(answerButton.children).forEach((button) => {
+    button.disabled = true;
+
+    if (button.dataset.correct === "true") {
+      button.classList.add("correct");
     }
-    else{
-       startQuiz();  
+
+    if (button === selectedBtn && isCorrect) {
+      button.classList.add("correct");
     }
-  })
-  startQuiz();
+
+    if (button === selectedBtn && !isCorrect) {
+      button.classList.add("incorrect");
+    }
+  });
+
+  if (isCorrect) {
+    score++;
+  }
+
+  nextButton.style.display = "block";
+}
+
+function showScore() {
+  resetState();
+  const percentage = Math.round((score / shuffledQuestions.length) * 100);
+
+  questionElement.innerHTML = `You scored ${score} out of ${shuffledQuestions.length}<br><small>${percentage}% correct</small>`;
+  nextButton.innerHTML = "Play Again";
+  nextButton.style.display = "block";
+  quizCompleted = true;
+}
+
+function handleNextButton() {
+  currentQuestionIndex++;
+
+  if (currentQuestionIndex < shuffledQuestions.length) {
+    showQuestion();
+  } else {
+    showScore();
+  }
+}
+
+nextButton.addEventListener("click", () => {
+  if (quizCompleted) {
+    startQuiz();
+    return;
+  }
+
+  if (currentQuestionIndex < shuffledQuestions.length) {
+    handleNextButton();
+  }
+});
+
+startQuiz();
